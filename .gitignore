@@ -1,0 +1,12 @@
+# Dependencias Node.js
+node_modules/
+
+# Base de datos SQLite en tiempo de ejecución y archivos WAL/SHM
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+
+# Variables de entorno y archivos del sistema
+.env
+.DS_Store
+Thumbs.db

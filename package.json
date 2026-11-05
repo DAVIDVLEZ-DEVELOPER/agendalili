@@ -1,0 +1,14 @@
+{
+  "name": "agenda-vintage-sdd",
+  "version": "1.0.0",
+  "description": "Sistema de Agenda de Tareas y Compromisos con Estética Vintage bajo SDD y Modelo en Cascada",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --no-warnings src/server.js",
+    "test": "node --no-warnings tests/run-tests.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "MIT"
+}
