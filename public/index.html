@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agenda SDD — Sistema Modular de Tareas y Compromisos (Glassmorphism)</title>
+  <!-- Tipografías Minimalistas: Inter + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Bootstrap 5.3 Grid & Utilities -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Sistema de Diseño Minimalista Glassmorphism -->
+  <link rel="stylesheet" href="/css/glassmorphism.css" />
+</head>
+<body>
+  <!-- Lienzo Ambiental con Orbes de Refracción para Efecto Glassmorphism -->
+  <div class="ambient-canvas" aria-hidden="true">
+    <div class="ambient-orb ambient-orb--1"></div>
+    <div class="ambient-orb ambient-orb--2"></div>
+    <div class="ambient-orb ambient-orb--3"></div>
+  </div>
+
+  <div class="app-shell">
+    <!-- ==================== BARRA SUPERIOR GLASSMORPHISM & NAVEGACIÓN DE MÓDULOS ==================== -->
+    <header class="glass-card glass-topbar">
+      <div class="brand-cluster">
+        <div class="brand-logo-glass" aria-hidden="true">✦</div>
+        <div>
+          <h1 class="brand-title">Agenda de Tareas &amp; Compromisos</h1>
+          <p class="brand-subtitle">
+            <span>SDD v1.0.0</span>
+            <span>&bull;</span>
+            <span>Glassmorphism UI Modular</span>
+            <span>&bull;</span>
+            <span class="badge-rule">RN-01..RN-05</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Selector de Módulos -->
+      <nav class="module-nav" aria-label="Navegación de módulos del sistema">
+        <button type="button" class="module-tab-btn active" data-module-target="all">
+          <span>Vista General</span>
+        </button>
+        <button type="button" class="module-tab-btn" data-module-target="tasks">
+          <span>Módulo Tareas</span>
+          <span class="module-count-pill" id="navCountTasks">0</span>
+        </button>
+        <button type="button" class="module-tab-btn" data-module-target="commitments">
+          <span>Módulo Compromisos</span>
+          <span class="module-count-pill" id="navCountCommitments">0</span>
+        </button>
+        <button type="button" class="module-tab-btn" data-module-target="sdd">
+          <span>Contrato &amp; Simulador SDD</span>
+        </button>
+      </nav>
+
+      <!-- Acciones Rápidas (Conmutador Cristal Claro / Oscuro) -->
+      <div class="topbar-actions">
+        <button type="button" id="themeToggleBtn" class="btn-glass btn-glass-sm">
+          ☾ Cristal Oscuro
+        </button>
+      </div>
+    </header>
+
+    <!-- Notificación Global en Línea -->
+    <div id="globalNotification" class="d-none" role="alert" aria-live="polite"></div>
+
+    <!-- ==================== TARJETAS KPI GLASS ==================== -->
+    <section class="kpi-grid" aria-label="Métricas en tiempo real del dominio">
+      <div class="glass-card glass-card--interactive kpi-glass-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Tareas (Task)</span>
+          <span class="kpi-icon-badge" style="background: var(--prio-media-bg); color: var(--prio-media-text);">✓</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalTasks">0</div>
+        <div class="kpi-meta">
+          <span id="kpiCompletedTasks">0 completada(s)</span>
+          <span>&bull;</span>
+          <span class="badge-rule">RN-01 / RN-02</span>
+        </div>
+      </div>
+
+      <div class="glass-card glass-card--interactive kpi-glass-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Pendientes Vencidas</span>
+          <span class="kpi-icon-badge" style="background: var(--prio-critica-bg); color: var(--prio-critica-text);">⏳</span>
+        </div>
+        <div class="kpi-value" id="kpiOverdueTasks">0</div>
+        <div class="kpi-meta">
+          <code>getPendingTasksOverdue(now)</code>
+        </div>
+      </div>
+
+      <div class="glass-card glass-card--interactive kpi-glass-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Compromisos Activos</span>
+          <span class="kpi-icon-badge" style="background: var(--prio-baja-bg); color: var(--prio-baja-text);">🗓</span>
+        </div>
+        <div class="kpi-value" id="kpiActiveCommitments">0</div>
+        <div class="kpi-meta">
+          <span id="kpiConfirmedCommitments">0 confirmado(s)</span>
+          <span>&bull;</span>
+          <span class="badge-rule">RN-03</span>
+        </div>
+      </div>
+
+      <div class="glass-card glass-card--interactive kpi-glass-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Motor Determinista</span>
+          <span class="kpi-icon-badge" style="background: var(--accent-primary-soft); color: var(--accent-primary);">⚡</span>
+        </div>
+        <div class="kpi-value" style="font-size: 1.35rem;">5 Reglas SDD</div>
+        <div class="kpi-meta">
+          <span>RFC 5322 &bull; Sin Traslapes &bull; SQLite</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BARRA DE BÚSQUEDA Y EVALUADOR DE VENCIMIENTO ==================== -->
+    <section class="glass-card control-strip" aria-label="Búsqueda y evaluación temporal">
+      <div class="search-box-glass">
+        <span class="search-icon">⌕</span>
+        <input
+          type="search"
+          id="globalSearchInput"
+          placeholder="Buscar por título, descripción, etiqueta (#Trabajo) o participante (correo RFC 5322)..."
+          aria-label="Buscar en tareas y compromisos"
+        />
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <label for="overdueReferenceInput" class="small fw-semibold mb-0" style="color: var(--text-secondary);">
+          Evaluar <code>getPendingTasksOverdue(now)</code>:
+        </label>
+        <input
+          type="datetime-local"
+          id="overdueReferenceInput"
+          class="glass-input w-auto py-1 px-2"
+          style="font-size: 0.8rem;"
+        />
+        <button type="button" id="btnCheckOverdueNow" class="btn-glass btn-glass-sm">
+          Verificar Vencidas
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== WORKSPACE MODULAR: TAREAS & COMPROMISOS ==================== -->
+    <main class="row g-4">
+      <!-- ==================== MÓDULO 1: TAREAS (TASK) ==================== -->
+      <div class="col-lg-6" id="moduleTasksCol">
+        <!-- Formulario de Creación de Tarea -->
+        <section class="glass-card mb-4" aria-labelledby="headingTaskForm">
+          <div class="section-header-glass">
+            <h2 id="headingTaskForm" class="section-title">
+              <span>✦ Nueva Tarea</span>
+              <span class="mono-uuid">TaskService.createTask</span>
+            </h2>
+            <div class="d-flex gap-1">
+              <span class="badge-rule">RN-01</span>
+              <span class="badge-rule">RN-02</span>
+            </div>
+          </div>
+
+          <div class="section-body-glass">
+            <form id="taskForm" novalidate>
+              <!-- Título (Máx. 100 caracteres) -->
+              <div class="mb-3">
+                <div class="glass-label">
+                  <label for="taskTitulo">Título de la Tarea <span class="text-danger">*</span></label>
+                  <span id="taskTituloCounter" class="char-pill">0 / 100</span>
+                </div>
+                <input
+                  type="text"
+                  id="taskTitulo"
+                  name="titulo"
+                  class="glass-input"
+                  maxlength="100"
+                  required
+                  placeholder="Ej. Diseñar arquitectura modular de microservicios..."
+                />
+              </div>
+
+              <!-- Descripción (Opcional, Máx. 500 caracteres) -->
+              <div class="mb-3">
+                <div class="glass-label">
+                  <label for="taskDescripcion">Descripción (Opcional)</label>
+                  <span id="taskDescripcionCounter" class="char-pill">0 / 500</span>
+                </div>
+                <textarea
+                  id="taskDescripcion"
+                  name="descripcion"
+                  class="glass-textarea"
+                  rows="2"
+                  maxlength="500"
+                  placeholder="Detalle explicativo de la tarea (máx. 500 caracteres)..."
+                ></textarea>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <!-- Fecha de Vencimiento (RN-01) -->
+                <div class="col-md-6">
+                  <label for="taskFechaVencimiento" class="glass-label">
+                    <span>Fecha Vencimiento <span class="text-danger">*</span></span>
+                    <span class="badge-rule">RN-01</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="taskFechaVencimiento"
+                    name="fechaVencimiento"
+                    class="glass-input"
+                    required
+                  />
+                  <div class="small mt-1" style="color: var(--text-muted); font-size: 0.74rem;">
+                    No se permiten fechas en el pasado.
+                  </div>
+                </div>
+
+                <!-- Prioridad -->
+                <div class="col-md-3">
+                  <label for="taskPrioridad" class="glass-label">Prioridad</label>
+                  <select id="taskPrioridad" name="prioridad" class="glass-select" required>
+                    <option value="BAJA">BAJA</option>
+                    <option value="MEDIA" selected>MEDIA</option>
+                    <option value="ALTA">ALTA</option>
+                    <option value="CRITICA">CRITICA</option>
+                  </select>
+                </div>
+
+                <!-- Estado -->
+                <div class="col-md-3">
+                  <label for="taskEstado" class="glass-label">Estado</label>
+                  <select id="taskEstado" name="estado" class="glass-select" required>
+                    <option value="PENDIENTE" selected>PENDIENTE</option>
+                    <option value="EN_PROCESO">EN_PROCESO</option>
+                    <option value="COMPLETADA">COMPLETADA</option>
+                    <option value="CANCELADA">CANCELADA</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Etiquetas -->
+              <div class="mb-3">
+                <label for="taskEtiquetas" class="glass-label">
+                  <span>Etiquetas (Opcional, separadas por coma)</span>
+                </label>
+                <input
+                  type="text"
+                  id="taskEtiquetas"
+                  name="etiquetas"
+                  class="glass-input"
+                  placeholder="Trabajo, Personal, Arquitectura"
+                />
+              </div>
+
+              <!-- Alerta de Validación de Tarea -->
+              <div id="taskFormFeedback" class="d-none" role="alert"></div>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button type="reset" class="btn-glass">Limpiar</button>
+                <button type="submit" class="btn-glass btn-glass-primary">
+                  + Crear Tarea
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Listado de Tareas -->
+        <section class="glass-card" aria-labelledby="headingTaskList">
+          <div class="section-header-glass flex-wrap">
+            <h2 id="headingTaskList" class="section-title">
+              <span>❖ Tareas Registradas</span>
+            </h2>
+            <div class="d-flex flex-wrap gap-2">
+              <select
+                id="filterTaskPriority"
+                class="glass-select py-1 px-2 w-auto"
+                style="font-size: 0.78rem;"
+                aria-label="Filtrar tareas por prioridad"
+              >
+                <option value="ALL">Todas las prioridades</option>
+                <option value="CRITICA">CRITICA</option>
+                <option value="ALTA">ALTA</option>
+                <option value="MEDIA">MEDIA</option>
+                <option value="BAJA">BAJA</option>
+              </select>
+              <select
+                id="filterTaskStatus"
+                class="glass-select py-1 px-2 w-auto"
+                style="font-size: 0.78rem;"
+                aria-label="Filtrar tareas por estado"
+              >
+                <option value="ALL">Todos los estados</option>
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="EN_PROCESO">EN_PROCESO</option>
+                <option value="COMPLETADA">COMPLETADA</option>
+                <option value="CANCELADA">CANCELADA</option>
+              </select>
+            </div>
+          </div>
+          <div class="section-body-glass" id="tasksContainer">
+            <!-- Renderizado dinámico por UIRenderer.renderTaskList -->
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== MÓDULO 2: COMPROMISOS (COMMITMENT) ==================== -->
+      <div class="col-lg-6" id="moduleCommitmentsCol">
+        <!-- Formulario de Agendamiento de Compromiso -->
+        <section class="glass-card mb-4" aria-labelledby="headingCommitmentForm">
+          <div class="section-header-glass">
+            <h2 id="headingCommitmentForm" class="section-title">
+              <span>✦ Agendar Compromiso</span>
+              <span class="mono-uuid">CommitmentService.scheduleCommitment</span>
+            </h2>
+            <div class="d-flex gap-1">
+              <span class="badge-rule">RN-03</span>
+              <span class="badge-rule">RN-04</span>
+              <span class="badge-rule">RN-05</span>
+            </div>
+          </div>
+
+          <div class="section-body-glass">
+            <form id="commitmentForm" novalidate>
+              <!-- Título (Máx. 100 caracteres) -->
+              <div class="mb-3">
+                <div class="glass-label">
+                  <label for="commTitulo">Título del Compromiso <span class="text-danger">*</span></label>
+                  <span id="commTituloCounter" class="char-pill">0 / 100</span>
+                </div>
+                <input
+                  type="text"
+                  id="commTitulo"
+                  name="titulo"
+                  class="glass-input"
+                  maxlength="100"
+                  required
+                  placeholder="Ej. Sesión de Revisión de Contratos SDD..."
+                />
+              </div>
+
+              <!-- Descripción Opcional -->
+              <div class="mb-3">
+                <label for="commDescripcion" class="glass-label">Descripción del Encuentro (Opcional)</label>
+                <textarea
+                  id="commDescripcion"
+                  name="descripcion"
+                  class="glass-textarea"
+                  rows="2"
+                  placeholder="Puntos de agenda, acuerdos esperados o notas..."
+                ></textarea>
+              </div>
+
+              <!-- Fechas Inicio y Fin + Presets de Duración (RN-04 >= 15 min) -->
+              <div class="row g-3 mb-2">
+                <div class="col-md-6">
+                  <label for="commFechaInicio" class="glass-label">
+                    <span>Fecha y Hora Inicio <span class="text-danger">*</span></span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="commFechaInicio"
+                    name="fechaInicio"
+                    class="glass-input"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <div class="glass-label">
+                    <label for="commFechaFin">Fecha y Hora Fin <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-1">
+                      <button type="button" class="badge-rule border-0" style="cursor:pointer;" data-duration-preset="15" title="Duración mínima RN-04: 15 min">+15m</button>
+                      <button type="button" class="badge-rule border-0" style="cursor:pointer;" data-duration-preset="30">+30m</button>
+                      <button type="button" class="badge-rule border-0" style="cursor:pointer;" data-duration-preset="60">+60m</button>
+                    </div>
+                  </div>
+                  <input
+                    type="datetime-local"
+                    id="commFechaFin"
+                    name="fechaFin"
+                    class="glass-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Alerta en Vivo de Disponibilidad Horaria (RN-03 y RN-04) -->
+              <div id="commDateRangeAlert" class="glass-alert glass-alert--info mb-3">
+                <div>
+                  <strong>RN-03 &amp; RN-04:</strong> Se verifica en tiempo real que <code>fechaFin &gt; fechaInicio</code> (mín. 15 min) y ausencia de traslapes horarios.
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="commUbicacion" class="glass-label">Ubicación (Enlace o Dirección)</label>
+                  <input
+                    type="text"
+                    id="commUbicacion"
+                    name="ubicacion"
+                    class="glass-input"
+                    placeholder="Ej. Sala Cristal / https://meet.sdd.dev/sync"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label for="commEstado" class="glass-label">Estado</label>
+                  <select id="commEstado" name="estado" class="glass-select" required>
+                    <option value="PROGRAMADO" selected>PROGRAMADO</option>
+                    <option value="CONFIRMADO">CONFIRMADO</option>
+                    <option value="CANCELADO">CANCELADO</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label for="commRecordatorio" class="glass-label">Alerta (min)</label>
+                  <input
+                    type="number"
+                    id="commRecordatorio"
+                    name="minutosRecordatorio"
+                    class="glass-input"
+                    value="15"
+                    min="0"
+                    step="1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Participantes con Previsualización de Chips RFC 5322 en Vivo (RN-05) -->
+              <div class="mb-3">
+                <div class="glass-label">
+                  <label for="commParticipantes">
+                    Participantes — Correos RFC 5322 (mín. 1, primero = creador) <span class="text-danger">*</span>
+                  </label>
+                  <span class="badge-rule">RN-05</span>
+                </div>
+                <input
+                  type="text"
+                  id="commParticipantes"
+                  name="participantes"
+                  class="glass-input mb-2"
+                  required
+                  value="clara.valle@editorialvintage.es"
+                  placeholder="creador@dominio.com, asistente@dominio.com"
+                />
+                <div id="commParticipantChips" class="d-flex flex-wrap"></div>
+              </div>
+
+              <!-- Alerta de Error de Compromiso -->
+              <div id="commFormFeedback" class="d-none" role="alert"></div>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button type="reset" class="btn-glass">Limpiar</button>
+                <button type="submit" id="btnSubmitCommitment" class="btn-glass btn-glass-teal">
+                  + Agendar Compromiso
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Listado de Compromisos -->
+        <section class="glass-card" aria-labelledby="headingCommitmentList">
+          <div class="section-header-glass">
+            <h2 id="headingCommitmentList" class="section-title">
+              <span>❖ Bitácora de Compromisos</span>
+            </h2>
+            <select
+              id="filterCommStatus"
+              class="glass-select py-1 px-2 w-auto"
+              style="font-size: 0.78rem;"
+              aria-label="Filtrar compromisos por estado"
+            >
+              <option value="ALL">Todos los estados</option>
+              <option value="PROGRAMADO">PROGRAMADO</option>
+              <option value="CONFIRMADO">CONFIRMADO</option>
+              <option value="CANCELADO">CANCELADO</option>
+            </select>
+          </div>
+          <div class="section-body-glass" id="commitmentsContainer">
+            <!-- Renderizado dinámico por UIRenderer.renderCommitmentList -->
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== MÓDULO 3: INSPECTOR & SIMULADOR INTERACTIVO DE CONTRATO SDD ==================== -->
+      <div class="col-12 d-none" id="moduleSddInspector">
+        <section class="glass-card">
+          <div class="section-header-glass flex-wrap">
+            <div>
+              <h2 class="section-title">
+                <span>⚡ Inspector de Reglas de Negocio &amp; Contratos SDD v1.0.0</span>
+              </h2>
+              <p class="small mb-0" style="color: var(--text-muted);">
+                Verifica en vivo la respuesta determinista de <code>TaskService</code> y <code>CommitmentService</code> ante violaciones de las reglas RN-01 a RN-05.
+              </p>
+            </div>
+            <span class="badge-rule">TypeScript / POO Strict Contract</span>
+          </div>
+
+          <div class="section-body-glass">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="sdd-rule-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge-rule">RN-01</span>
+                    <code class="small">TaskValidationException</code>
+                  </div>
+                  <h3 class="h6 fw-bold">Validación de Fechas de Tareas</h3>
+                  <p class="small" style="color: var(--text-secondary);">
+                    No se puede crear ni actualizar una tarea con una <code>fechaVencimiento</code> en el pasado respecto al momento de creación.
+                  </p>
+                  <button type="button" class="btn-glass btn-glass-sm w-100" data-sdd-sim="RN-01">
+                    Simular Violación RN-01
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="sdd-rule-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge-rule">RN-02</span>
+                    <code class="small">TaskValidationException</code>
+                  </div>
+                  <h3 class="h6 fw-bold">Transiciones de Estado de Tarea</h3>
+                  <p class="small" style="color: var(--text-secondary);">
+                    Una tarea <code>COMPLETADA</code> o <code>CANCELADA</code> es terminal y no puede regresar a <code>EN_PROCESO</code> ni <code>PENDIENTE</code>.
+                  </p>
+                  <button type="button" class="btn-glass btn-glass-sm w-100" data-sdd-sim="RN-02">
+                    Simular Violación RN-02
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="sdd-rule-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge-rule">RN-03</span>
+                    <code class="small">ScheduleConflictException</code>
+                  </div>
+                  <h3 class="h6 fw-bold">Sin Solapamiento de Compromisos</h3>
+                  <p class="small" style="color: var(--text-secondary);">
+                    Prohíbe traslapes en estado <code>PROGRAMADO</code> o <code>CONFIRMADO</code>: <code>(NuevoInicio &lt; ExistenteFin) &amp;&amp; (NuevoFin &gt; ExistenteInicio)</code>.
+                  </p>
+                  <button type="button" class="btn-glass btn-glass-sm w-100" data-sdd-sim="RN-03">
+                    Simular Colisión RN-03
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="sdd-rule-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge-rule">RN-04</span>
+                    <code class="small">Duración Mínima &ge; 15 min</code>
+                  </div>
+                  <h3 class="h6 fw-bold">Duración Mínima de Compromiso</h3>
+                  <p class="small" style="color: var(--text-secondary);">
+                    La diferencia entre <code>fechaInicio</code> y <code>fechaFin</code> debe ser de al menos 15 minutos con <code>fechaFin &gt; fechaInicio</code>.
+                  </p>
+                  <button type="button" class="btn-glass btn-glass-sm" data-sdd-sim="RN-04">
+                    Simular Violación RN-04 (5 min)
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="sdd-rule-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge-rule">RN-05</span>
+                    <code class="small">Estándar RFC 5322</code>
+                  </div>
+                  <h3 class="h6 fw-bold">Validación de Participantes</h3>
+                  <p class="small" style="color: var(--text-secondary);">
+                    Mínimo 1 participante (el creador) y todos los correos deben cumplir estrictamente el estándar RFC 5322.
+                  </p>
+                  <button type="button" class="btn-glass btn-glass-sm" data-sdd-sim="RN-05">
+                    Simular Violación RN-05 (Email Inválido)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="sddSimOutput" class="glass-alert glass-alert--info mt-3">
+              <div>
+                Pulsa cualquiera de los botones superiores para disparar una prueba real contra el motor de dominio SDD y observar la excepción determinista capturada.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODAL GLASSMORPHISM DE EDICIÓN DE TAREA ==================== -->
+  <div id="editTaskModal" class="glass-modal-backdrop d-none" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="glass-card glass-modal-dialog">
+      <div class="d-flex justify-content-between align-items-center pb-3 mb-3" style="border-bottom: 1px solid var(--glass-border-subtle);">
+        <h3 id="editModalTitle" class="h6 fw-bold mb-0">✎ Actualizar Tarea (Valida RN-01 y RN-02)</h3>
+        <button type="button" id="btnCloseEditModal" class="btn-glass btn-glass-sm">✕</button>
+      </div>
+
+      <form id="editTaskForm" novalidate>
+        <input type="hidden" id="editTaskId" />
+
+        <div class="mb-3">
+          <label for="editTaskTitulo" class="glass-label">Título (Máx. 100 caracteres)</label>
+          <input type="text" id="editTaskTitulo" class="glass-input" maxlength="100" required />
+        </div>
+
+        <div class="mb-3">
+          <label for="editTaskDescripcion" class="glass-label">Descripción (Máx. 500 caracteres)</label>
+          <textarea id="editTaskDescripcion" class="glass-textarea" rows="2" maxlength="500"></textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="editTaskFechaVencimiento" class="glass-label">
+              <span>Fecha Vencimiento</span>
+              <span class="badge-rule">RN-01</span>
+            </label>
+            <input type="datetime-local" id="editTaskFechaVencimiento" class="glass-input" required />
+          </div>
+          <div class="col-md-3">
+            <label for="editTaskPrioridad" class="glass-label">Prioridad</label>
+            <select id="editTaskPrioridad" class="glass-select">
+              <option value="BAJA">BAJA</option>
+              <option value="MEDIA">MEDIA</option>
+              <option value="ALTA">ALTA</option>
+              <option value="CRITICA">CRITICA</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="editTaskEstado" class="glass-label">
+              <span>Estado</span>
+              <span class="badge-rule">RN-02</span>
+            </label>
+            <select id="editTaskEstado" class="glass-select">
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN_PROCESO">EN_PROCESO</option>
+              <option value="COMPLETADA">COMPLETADA</option>
+              <option value="CANCELADA">CANCELADA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="editTaskEtiquetas" class="glass-label">Etiquetas (separadas por coma)</label>
+          <input type="text" id="editTaskEtiquetas" class="glass-input" />
+        </div>
+
+        <div id="editTaskFeedback" class="d-none" role="alert"></div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" id="btnCancelEditModal" class="btn-glass">Cancelar</button>
+          <button type="submit" class="btn-glass btn-glass-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contenedor Flotante de Notificaciones Toast Glassmorphism -->
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+  <!-- Punto de Entrada Modular ES6 -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
