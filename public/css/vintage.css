@@ -1,0 +1,446 @@
+/**
+ * Sistema de Diseño Vintage - Hoja de Estilos Principal
+ * Fuentes: design.md_sistema_de_dise_o_vintage.md y sdd-agenda-tareas.md
+ * Proporción Cromática verificada: 60% --blanco / 40% Acentos Pastel (8% c/u)
+ */
+
+:root {
+  --pastel-1: #F4C2C2;
+  --pastel-2: #D7BDE2;
+  --pastel-3: #A7D8E8;
+  --pastel-4: #FFF3B0;
+  --pastel-5: #B5EAD7;
+  --blanco: #FFFFFF;
+
+  /* Tintas de época de alto contraste WCAG AA/AAA sobre blanco y pasteles */
+  --tinta-oscura: #261F1D;
+  --tinta-media: #4E423E;
+  --tinta-suave: #6E5F5A;
+  --borde-epoca: #3A2E2B;
+}
+
+/* ==================== SUPERFICIE PRINCIPAL (60% --blanco) ==================== */
+body {
+  background-color: var(--blanco);
+  background-image:
+    radial-gradient(var(--pastel-2) 0.55px, transparent 0.55px),
+    radial-gradient(var(--pastel-3) 0.55px, var(--blanco) 0.55px);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+  color: var(--tinta-oscura);
+  font-family: 'Lora', 'Georgia', 'Times New Roman', serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .serif-heading {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  color: var(--tinta-oscura);
+  letter-spacing: 0.02em;
+}
+
+/* ==================== CABECERA EDITORIAL VINTAGE ==================== */
+.vintage-masthead {
+  background-color: var(--blanco);
+  border-bottom: 4px double var(--borde-epoca);
+  position: relative;
+}
+
+.vintage-ribbon {
+  height: 10px;
+  background: linear-gradient(
+    90deg,
+    var(--pastel-1) 0%,
+    var(--pastel-1) 20%,
+    var(--pastel-2) 20%,
+    var(--pastel-2) 40%,
+    var(--pastel-3) 40%,
+    var(--pastel-3) 60%,
+    var(--pastel-4) 60%,
+    var(--pastel-4) 80%,
+    var(--pastel-5) 80%,
+    var(--pastel-5) 100%
+  );
+  border-bottom: 1px solid var(--borde-epoca);
+}
+
+.masthead-ornament {
+  display: inline-block;
+  padding: 0.2rem 0.85rem;
+  background-color: var(--pastel-4);
+  border: 1px solid var(--borde-epoca);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.vintage-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0.75rem 0;
+  color: var(--tinta-media);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+}
+
+.vintage-divider::before,
+.vintage-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--pastel-2);
+  border-top: 1px solid var(--borde-epoca);
+  height: 3px;
+}
+
+.vintage-divider span {
+  padding: 0 0.9rem;
+}
+
+/* ==================== BARRA DE PROPORCIÓN CROMÁTICA 60/40 ==================== */
+.palette-meter-card {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0px var(--pastel-2);
+}
+
+.proportion-bar {
+  display: flex;
+  height: 18px;
+  border: 1px solid var(--borde-epoca);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.prop-white {
+  width: 60%;
+  background-color: var(--blanco);
+  color: var(--tinta-oscura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px dashed var(--borde-epoca);
+}
+
+.prop-p1 { width: 8%; background-color: var(--pastel-1); }
+.prop-p2 { width: 8%; background-color: var(--pastel-2); }
+.prop-p3 { width: 8%; background-color: var(--pastel-3); }
+.prop-p4 { width: 8%; background-color: var(--pastel-4); }
+.prop-p5 { width: 8%; background-color: var(--pastel-5); }
+
+.swatch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 5px;
+  border: 1px solid var(--borde-epoca);
+  font-size: 0.75rem;
+  background-color: var(--blanco);
+}
+
+.swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--borde-epoca);
+  display: inline-block;
+}
+
+/* ==================== TARJETAS Y PANELES VINTAGE ==================== */
+.vintage-panel {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0px var(--pastel-3);
+  overflow: hidden;
+}
+
+.vintage-panel.commitment-panel {
+  box-shadow: 4px 4px 0px var(--pastel-2);
+}
+
+.vintage-panel-header {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 2px double var(--borde-epoca);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-tasks {
+  background-color: var(--pastel-3);
+}
+
+.header-commitments {
+  background-color: var(--pastel-2);
+}
+
+.header-form-tasks {
+  background-color: var(--pastel-4);
+}
+
+.header-form-commitments {
+  background-color: var(--pastel-5);
+}
+
+/* Tarjetas individuales de Tarea / Compromiso (Fondo --blanco 60%, bordes y acentos 40%) */
+.vintage-item-card {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-left-width: 7px;
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.9rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  position: relative;
+}
+
+.vintage-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0px var(--pastel-2);
+}
+
+/* Bordes laterales por prioridad de tarea */
+.border-prio-BAJA { border-left-color: var(--pastel-5); }
+.border-prio-MEDIA { border-left-color: var(--pastel-3); }
+.border-prio-ALTA { border-left-color: var(--pastel-4); }
+.border-prio-CRITICA { border-left-color: var(--pastel-1); }
+
+/* Bordes laterales por estado de compromiso */
+.border-comm-PROGRAMADO { border-left-color: var(--pastel-3); }
+.border-comm-CONFIRMADO { border-left-color: var(--pastel-5); }
+.border-comm-CANCELADO { border-left-color: var(--pastel-1); opacity: 0.85; }
+
+/* ==================== INSIGNIAS (BADGES) DE PRIORIDAD Y ESTADO ==================== */
+.vintage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.22rem 0.6rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--borde-epoca);
+  border-radius: 5px;
+  color: var(--tinta-oscura);
+}
+
+/* Prioridades de Tarea */
+.badge-prio-BAJA { background-color: var(--pastel-5); }
+.badge-prio-MEDIA { background-color: var(--pastel-3); }
+.badge-prio-ALTA { background-color: var(--pastel-4); }
+.badge-prio-CRITICA {
+  background-color: var(--pastel-1);
+  border-style: double;
+  border-width: 3px;
+}
+
+/* Estados de Tarea */
+.badge-status-PENDIENTE { background-color: var(--pastel-4); }
+.badge-status-EN_PROCESO { background-color: var(--pastel-3); }
+.badge-status-COMPLETADA { background-color: var(--pastel-5); }
+.badge-status-CANCELADA {
+  background-color: var(--pastel-1);
+  text-decoration: line-through;
+}
+
+/* Estados de Compromiso */
+.badge-comm-PROGRAMADO { background-color: var(--pastel-3); }
+.badge-comm-CONFIRMADO { background-color: var(--pastel-5); }
+.badge-comm-CANCELADO {
+  background-color: var(--pastel-1);
+  text-decoration: line-through;
+}
+
+/* Etiquetas (Tags) y Participantes */
+.vintage-tag {
+  display: inline-block;
+  background-color: var(--pastel-2);
+  color: var(--tinta-oscura);
+  border: 1px solid var(--borde-epoca);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.74rem;
+  margin-right: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.participant-pill {
+  display: inline-block;
+  background-color: var(--blanco);
+  border: 1px solid var(--borde-epoca);
+  box-shadow: 1px 1px 0px var(--pastel-3);
+  border-radius: 4px;
+  padding: 0.12rem 0.5rem;
+  font-size: 0.75rem;
+  margin-right: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.uuid-stamp {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  background-color: var(--blanco);
+  border: 1px dashed var(--borde-epoca);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  color: var(--tinta-media);
+}
+
+/* ==================== FORMULARIOS, INPUTS, HOVER Y FOCO ==================== */
+.form-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--tinta-oscura);
+  margin-bottom: 0.25rem;
+}
+
+.form-control,
+.form-select {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-radius: 6px;
+  color: var(--tinta-oscura);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 0.92rem;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control:hover,
+.form-select:hover {
+  background-color: var(--blanco);
+  border-color: var(--tinta-oscura);
+  box-shadow: 2px 2px 0px var(--pastel-4);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--blanco);
+  color: var(--tinta-oscura);
+  border-color: var(--borde-epoca);
+  outline: 2px solid var(--pastel-2);
+  box-shadow: 3px 3px 0px var(--pastel-3);
+}
+
+.form-control.is-invalid-vintage {
+  border-color: var(--borde-epoca);
+  background-color: var(--pastel-1);
+}
+
+/* Contadores de caracteres */
+.char-counter {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--borde-epoca);
+  background-color: var(--blanco);
+  font-weight: 600;
+}
+
+.char-counter.near-limit {
+  background-color: var(--pastel-4);
+}
+
+.char-counter.at-limit {
+  background-color: var(--pastel-1);
+}
+
+/* ==================== BOTONES VINTAGE ==================== */
+.btn-vintage {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--tinta-oscura);
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  box-shadow: 2px 2px 0px var(--borde-epoca);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-vintage:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--borde-epoca);
+  color: var(--tinta-oscura);
+  background-color: var(--pastel-4);
+}
+
+.btn-vintage:focus-visible {
+  outline: 3px solid var(--pastel-2);
+  outline-offset: 2px;
+}
+
+.btn-vintage:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--borde-epoca);
+}
+
+.btn-vintage-mint { background-color: var(--pastel-5); }
+.btn-vintage-mint:hover { background-color: var(--pastel-3); }
+
+.btn-vintage-sky { background-color: var(--pastel-3); }
+.btn-vintage-sky:hover { background-color: var(--pastel-5); }
+
+.btn-vintage-lavender { background-color: var(--pastel-2); }
+.btn-vintage-lavender:hover { background-color: var(--pastel-4); }
+
+.btn-vintage-rose { background-color: var(--pastel-1); }
+.btn-vintage-rose:hover { background-color: var(--pastel-4); }
+
+.btn-vintage-cream { background-color: var(--pastel-4); }
+.btn-vintage-cream:hover { background-color: var(--pastel-5); }
+
+/* ==================== ALERTAS Y AVISOS DE VALIDACIÓN ==================== */
+.vintage-alert {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-left-width: 8px;
+  border-radius: 6px;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.86rem;
+  color: var(--tinta-oscura);
+}
+
+.vintage-alert-error {
+  border-left-color: var(--pastel-1);
+  background-color: var(--pastel-1);
+}
+
+.vintage-alert-warning {
+  border-left-color: var(--pastel-4);
+  background-color: var(--pastel-4);
+}
+
+.vintage-alert-success {
+  border-left-color: var(--pastel-5);
+  background-color: var(--pastel-5);
+}
+
+.vintage-alert-info {
+  border-left-color: var(--pastel-3);
+  background-color: var(--pastel-3);
+}
+
+/* Tarjetas de Resumen KPI (superficie blanca con acento superior pastel) */
+.kpi-vintage-box {
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-epoca);
+  border-top-width: 6px;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.kpi-p1 { border-top-color: var(--pastel-1); }
+.kpi-p2 { border-top-color: var(--pastel-2); }
+.kpi-p3 { border-top-color: var(--pastel-3); }
+.kpi-p4 { border-top-color: var(--pastel-4); }
+.kpi-p5 { border-top-color: var(--pastel-5); }
+
