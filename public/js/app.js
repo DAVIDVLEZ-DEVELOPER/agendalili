@@ -564,6 +564,14 @@ function openEditTaskModal(taskId) {
   els.editTaskEstado.value = task.estado;
   els.editTaskEtiquetas.value = (task.etiquetas || []).join(', ');
 
+  // RN-02: Bloquear opciones PENDIENTE y EN_PROCESO si la tarea ya está COMPLETADA o CANCELADA
+  const isTerminal = task.estado === 'COMPLETADA' || task.estado === 'CANCELADA';
+  Array.from(els.editTaskEstado.options).forEach((opt) => {
+    if (opt.value === 'PENDIENTE' || opt.value === 'EN_PROCESO') {
+      opt.disabled = isTerminal;
+    }
+  });
+
   els.editTaskModal.classList.remove('d-none');
 }
 
@@ -774,6 +782,40 @@ function setupEventListeners() {
   els.taskForm?.addEventListener('submit', handleTaskSubmit);
   els.commitmentForm?.addEventListener('submit', handleCommitmentSubmit);
 
+  // Restaurar fechas por defecto, contadores y alertas al pulsar "Limpiar" (reset)
+  els.taskForm?.addEventListener('reset', () => {
+    setTimeout(() => {
+      initDefaultDates();
+      els.taskFormFeedback?.classList.add('d-none');
+      if (els.taskTituloCounter) {
+        els.taskTituloCounter.textContent = '0 / 100';
+        els.taskTituloCounter.classList.remove('near-limit', 'at-limit');
+      }
+      if (els.taskDescripcionCounter) {
+        els.taskDescripcionCounter.textContent = '0 / 500';
+        els.taskDescripcionCounter.classList.remove('near-limit', 'at-limit');
+      }
+    }, 0);
+  });
+
+  els.commitmentForm?.addEventListener('reset', () => {
+    setTimeout(() => {
+      initDefaultDates();
+      els.commFormFeedback?.classList.add('d-none');
+      if (els.commParticipantes) {
+        els.commParticipantes.value = 'clara.valle@editorialvintage.es';
+      }
+      if (els.commRecordatorio) {
+        els.commRecordatorio.value = '15';
+      }
+      if (els.commTituloCounter) {
+        els.commTituloCounter.textContent = '0 / 100';
+        els.commTituloCounter.classList.remove('near-limit', 'at-limit');
+      }
+      validateCommitmentLive();
+    }, 0);
+  });
+
   ['change', 'input'].forEach((evt) => {
     els.commFechaInicio?.addEventListener(evt, validateCommitmentLive);
     els.commFechaFin?.addEventListener(evt, validateCommitmentLive);
@@ -841,9 +883,17 @@ function setupEventListeners() {
     }
   });
 
-  // Modal de edición de tarea
+  // Modal de edición de tarea (Cerrar por botón, clic en fondo o tecla Escape)
   els.btnCloseEditModal?.addEventListener('click', closeEditTaskModal);
   els.btnCancelEditModal?.addEventListener('click', closeEditTaskModal);
+  els.editTaskModal?.addEventListener('click', (e) => {
+    if (e.target === els.editTaskModal) closeEditTaskModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && els.editTaskModal && !els.editTaskModal.classList.contains('d-none')) {
+      closeEditTaskModal();
+    }
+  });
   els.editTaskForm?.addEventListener('submit', handleEditTaskSubmit);
 
   // Eventos delegados de Compromisos (Confirmar, Cancelar RN-03, Eliminar)

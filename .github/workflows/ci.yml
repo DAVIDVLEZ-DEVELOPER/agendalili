@@ -1,0 +1,30 @@
+name: SDD & TDD Verification Suite
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-sdd-and-tdd:
+    name: Verify Domain, SQLite, Glassmorphism UI & 100% TDD Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run Full SDD + SQLite Verification Suite
+        run: npm test
+
+      - name: Run Unit Test Suites TDD (Red-Green-Refactor)
+        run: npm run test:tdd
+
+      - name: Run TypeScript TDD Specification Suite
+        run: npm run test:ts

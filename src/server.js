@@ -163,7 +163,11 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
   const commitmentService = new CommitmentService(commitmentRepository);
 
   if (shouldSeed) {
-    seedInitialDataIfEmpty(taskService, commitmentService);
+    try {
+      seedInitialDataIfEmpty(taskService, commitmentService);
+    } catch {
+      // Ignorar si los datos semilla ya existen o se traslapan
+    }
   }
 
   const publicDir = path.join(__dirname, '..', 'public');
@@ -230,7 +234,8 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
         const userId = parsedUrl.searchParams.get('userId') || '*';
         const start = parsedUrl.searchParams.get('start');
         const end = parsedUrl.searchParams.get('end');
-        const hasConflict = commitmentService.hasScheduleConflict(userId, start, end);
+        const excludeId = parsedUrl.searchParams.get('excludeId') || null;
+        const hasConflict = commitmentService.hasScheduleConflict(userId, start, end, excludeId);
         return sendJson(res, 200, { ok: true, hasConflict });
       }
 

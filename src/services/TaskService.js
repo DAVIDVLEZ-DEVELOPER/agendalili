@@ -63,7 +63,7 @@ class TaskService {
       descripcion: dto.descripcion || '',
       fechaVencimiento: dueDate.toISOString(),
       prioridad: dto.prioridad || TaskPriority.MEDIA,
-      estado: dto.estado || TaskStatus.PENDIENTE,
+      estado: normalizeTaskStatus(dto.estado) || TaskStatus.PENDIENTE,
       etiquetas: Array.isArray(dto.etiquetas) ? dto.etiquetas : [],
     });
 

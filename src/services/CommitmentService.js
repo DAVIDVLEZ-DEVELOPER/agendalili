@@ -129,7 +129,7 @@ class CommitmentService {
    * @param {Date|string} end Fin del nuevo compromiso
    * @returns {boolean}
    */
-  hasScheduleConflict(userId, start, end) {
+  hasScheduleConflict(userId, start, end, excludeId = null) {
     const parsedStart = start instanceof Date ? start : new Date(start);
     const parsedEnd = end instanceof Date ? end : new Date(end);
 
@@ -143,7 +143,8 @@ class CommitmentService {
     const conflicts = this.commitmentRepository.findOverlapping(
       userId,
       parsedStart.toISOString(),
-      parsedEnd.toISOString()
+      parsedEnd.toISOString(),
+      excludeId
     );
 
     return conflicts.length > 0;
