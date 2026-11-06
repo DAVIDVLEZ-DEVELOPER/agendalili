@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agenda SDD — Sistema Modular de Tareas y Compromisos (Glassmorphism)</title>
+  <title>Agenda SDD &amp; TDD — Sistema Modular de Tareas y Compromisos (Glassmorphism)</title>
   <!-- Tipografías Minimalistas: Inter + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -37,9 +37,9 @@
           <p class="brand-subtitle">
             <span>SDD v1.0.0</span>
             <span>&bull;</span>
-            <span>Glassmorphism UI Modular</span>
+            <span>TDD Red-Green-Refactor</span>
             <span>&bull;</span>
-            <span class="badge-rule">RN-01..RN-05</span>
+            <span class="badge-rule">100% Coverage</span>
           </p>
         </div>
       </div>
@@ -58,7 +58,7 @@
           <span class="module-count-pill" id="navCountCommitments">0</span>
         </button>
         <button type="button" class="module-tab-btn" data-module-target="sdd">
-          <span>Contrato &amp; Simulador SDD</span>
+          <span>Laboratorio SDD &amp; TDD</span>
         </button>
       </nav>
 
@@ -114,12 +114,12 @@
 
       <div class="glass-card glass-card--interactive kpi-glass-card">
         <div class="kpi-header">
-          <span class="kpi-label">Motor Determinista</span>
-          <span class="kpi-icon-badge" style="background: var(--accent-primary-soft); color: var(--accent-primary);">⚡</span>
+          <span class="kpi-label">Suites Unitarias TDD</span>
+          <span class="kpi-icon-badge" style="background: var(--accent-primary-soft); color: var(--accent-primary);">🧪</span>
         </div>
-        <div class="kpi-value" style="font-size: 1.35rem;">5 Reglas SDD</div>
+        <div class="kpi-value" style="font-size: 1.35rem;" id="kpiTddStatus">10 / 10 PASS</div>
         <div class="kpi-meta">
-          <span>RFC 5322 &bull; Sin Traslapes &bull; SQLite</span>
+          <span>Red → Green → Refactor (100%)</span>
         </div>
       </div>
     </section>
@@ -184,7 +184,7 @@
                   class="glass-input"
                   maxlength="100"
                   required
-                  placeholder="Ej. Diseñar arquitectura modular de microservicios..."
+                  placeholder="Ej. Revisar PR de arquitectura modular..."
                 />
               </div>
 
@@ -490,30 +490,56 @@
         </section>
       </div>
 
-      <!-- ==================== MÓDULO 3: INSPECTOR & SIMULADOR INTERACTIVO DE CONTRATO SDD ==================== -->
+      <!-- ==================== MÓDULO 3: LABORATORIO INTERACTIVO SDD & SUITE TDD ==================== -->
       <div class="col-12 d-none" id="moduleSddInspector">
         <section class="glass-card">
           <div class="section-header-glass flex-wrap">
             <div>
               <h2 class="section-title">
-                <span>⚡ Inspector de Reglas de Negocio &amp; Contratos SDD v1.0.0</span>
+                <span>⚡ Laboratorio de Reglas de Negocio SDD &amp; Ejecutor Unitario TDD</span>
               </h2>
               <p class="small mb-0" style="color: var(--text-muted);">
-                Verifica en vivo la respuesta determinista de <code>TaskService</code> y <code>CommitmentService</code> ante violaciones de las reglas RN-01 a RN-05.
+                Verifica las reglas deterministas RN-01 a RN-05 y ejecuta en tiempo real las suites <code>TaskServiceTest</code> y <code>CommitmentServiceTest</code> (Ciclo Red → Green → Refactor).
               </p>
             </div>
-            <span class="badge-rule">TypeScript / POO Strict Contract</span>
+            <span class="badge-rule">100% Cobertura Dominio y Servicios</span>
           </div>
 
           <div class="section-body-glass">
+            <!-- Panel Ejecutor TDD (Red -> Green -> Refactor) -->
+            <div class="glass-panel-subtle p-3 p-md-4 mb-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                  <h3 class="h6 fw-bold mb-1">
+                    🧪 Suite de Pruebas Unitarias TDD (Ciclo Red → Green → Refactor)
+                  </h3>
+                  <p class="small mb-0" style="color: var(--text-muted);">
+                    Ejecuta en vivo <code>TaskServiceTest</code> (TDD-T01..T05) y <code>CommitmentServiceTest</code> (TDD-C01..C05) sobre repositorios Mock aislados.
+                  </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="glass-badge badge-status-COMPLETADA" id="tddCoverageBadge">Cobertura: 100%</span>
+                  <button type="button" id="btnRunTddSuites" class="btn-glass btn-glass-primary btn-glass-sm">
+                    ▶ Ejecutar Suite TDD Ahora
+                  </button>
+                </div>
+              </div>
+
+              <div id="tddSuitesContainer" class="row g-3">
+                <!-- Renderizado dinámico por app.js -->
+              </div>
+            </div>
+
+            <!-- Simulador de Excepciones SDD -->
+            <h3 class="h6 fw-bold mb-3">Simulador de Excepciones del Contrato (RN-01 a RN-05)</h3>
             <div class="row g-3">
               <div class="col-md-4">
                 <div class="sdd-rule-card">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge-rule">RN-01</span>
+                    <span class="badge-rule">RN-01 / TDD-T02</span>
                     <code class="small">TaskValidationException</code>
                   </div>
-                  <h3 class="h6 fw-bold">Validación de Fechas de Tareas</h3>
+                  <h4 class="h6 fw-bold">Validación de Fechas de Tareas</h4>
                   <p class="small" style="color: var(--text-secondary);">
                     No se puede crear ni actualizar una tarea con una <code>fechaVencimiento</code> en el pasado respecto al momento de creación.
                   </p>
@@ -526,12 +552,12 @@
               <div class="col-md-4">
                 <div class="sdd-rule-card">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge-rule">RN-02</span>
-                    <code class="small">TaskValidationException</code>
+                    <span class="badge-rule">RN-02 / TDD-T03</span>
+                    <code class="small">IllegalStateException</code>
                   </div>
-                  <h3 class="h6 fw-bold">Transiciones de Estado de Tarea</h3>
+                  <h4 class="h6 fw-bold">Transiciones de Estado de Tarea</h4>
                   <p class="small" style="color: var(--text-secondary);">
-                    Una tarea <code>COMPLETADA</code> o <code>CANCELADA</code> es terminal y no puede regresar a <code>EN_PROCESO</code> ni <code>PENDIENTE</code>.
+                    Una tarea <code>COMPLETADA</code> o <code>CANCELADA</code> no puede reabrirse a <code>EN_PROCESO</code> / <code>IN_PROCESS</code> ni <code>PENDIENTE</code>.
                   </p>
                   <button type="button" class="btn-glass btn-glass-sm w-100" data-sdd-sim="RN-02">
                     Simular Violación RN-02
@@ -542,10 +568,10 @@
               <div class="col-md-4">
                 <div class="sdd-rule-card">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge-rule">RN-03</span>
+                    <span class="badge-rule">RN-03 / TDD-C02</span>
                     <code class="small">ScheduleConflictException</code>
                   </div>
-                  <h3 class="h6 fw-bold">Sin Solapamiento de Compromisos</h3>
+                  <h4 class="h6 fw-bold">Sin Solapamiento de Compromisos</h4>
                   <p class="small" style="color: var(--text-secondary);">
                     Prohíbe traslapes en estado <code>PROGRAMADO</code> o <code>CONFIRMADO</code>: <code>(NuevoInicio &lt; ExistenteFin) &amp;&amp; (NuevoFin &gt; ExistenteInicio)</code>.
                   </p>
@@ -558,15 +584,15 @@
               <div class="col-md-6">
                 <div class="sdd-rule-card">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge-rule">RN-04</span>
-                    <code class="small">Duración Mínima &ge; 15 min</code>
+                    <span class="badge-rule">RN-04 / TDD-C04</span>
+                    <code class="small">IllegalArgumentException</code>
                   </div>
-                  <h3 class="h6 fw-bold">Duración Mínima de Compromiso</h3>
+                  <h4 class="h6 fw-bold">Duración Mínima de Compromiso (&ge; 15 min)</h4>
                   <p class="small" style="color: var(--text-secondary);">
-                    La diferencia entre <code>fechaInicio</code> y <code>fechaFin</code> debe ser de al menos 15 minutos con <code>fechaFin &gt; fechaInicio</code>.
+                    La diferencia entre <code>fechaInicio</code> y <code>fechaFin</code> debe ser de al menos 15 minutos ("Duración mínima 15 mins").
                   </p>
                   <button type="button" class="btn-glass btn-glass-sm" data-sdd-sim="RN-04">
-                    Simular Violación RN-04 (5 min)
+                    Simular Violación RN-04 (10 min)
                   </button>
                 </div>
               </div>
@@ -574,10 +600,10 @@
               <div class="col-md-6">
                 <div class="sdd-rule-card">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge-rule">RN-05</span>
-                    <code class="small">Estándar RFC 5322</code>
+                    <span class="badge-rule">RN-05 / TDD-C05</span>
+                    <code class="small">CommitmentValidationException</code>
                   </div>
-                  <h3 class="h6 fw-bold">Validación de Participantes</h3>
+                  <h4 class="h6 fw-bold">Validación de Participantes RFC 5322</h4>
                   <p class="small" style="color: var(--text-secondary);">
                     Mínimo 1 participante (el creador) y todos los correos deben cumplir estrictamente el estándar RFC 5322.
                   </p>

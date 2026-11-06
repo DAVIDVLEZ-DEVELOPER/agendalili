@@ -69,6 +69,13 @@ export class TaskValidationException extends Error {
   }
 }
 
+export class IllegalStateException extends TaskValidationException {
+  constructor(message: string = 'No se puede reabrir una tarea completada', ruleCode: string = 'RN-02') {
+    super(message, ruleCode);
+    this.name = 'IllegalStateException';
+  }
+}
+
 export class ScheduleConflictException extends Error {
   public readonly ruleCode: string;
   public readonly statusCode: number = 409;
@@ -88,6 +95,13 @@ export class CommitmentValidationException extends Error {
     super(message);
     this.name = 'CommitmentValidationException';
     this.ruleCode = ruleCode;
+  }
+}
+
+export class IllegalArgumentException extends CommitmentValidationException {
+  constructor(message: string = 'Duración mínima 15 mins', ruleCode: string = 'RN-04') {
+    super(message, ruleCode);
+    this.name = 'IllegalArgumentException';
   }
 }
 

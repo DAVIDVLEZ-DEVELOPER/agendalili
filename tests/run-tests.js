@@ -1,15 +1,15 @@
 /**
- * Fase 4 (Verificación): Suite de Pruebas Automatizadas del Modelo en Cascada
+ * Fase 4 (Verificación): Suite de Pruebas Automatizadas del Modelo en Cascada + TDD
  * Verifica:
  *  - Esquema SQLite relacional (`src/database/schema.sql`: `tasks`, `task_tags`, `commitments`, `commitment_participants`)
  *  - Entidades Task y Commitment (límites 100/500 chars, UUID, valores por defecto)
  *  - RN-01: Validación de fechaVencimiento futura en tareas (TaskValidationException)
- *  - RN-02: Prohibición de transiciones desde COMPLETADA/CANCELADA a EN_PROCESO/PENDIENTE (TaskValidationException)
+ *  - RN-02: Prohibición de transiciones desde COMPLETADA/CANCELADA a EN_PROCESO/PENDIENTE (IllegalStateException / TaskValidationException)
  *  - RN-03: Sin solapamiento de compromisos en estado PROGRAMADO o CONFIRMADO por userId UUID y por correo (ScheduleConflictException)
- *  - RN-04: fechaFin > fechaInicio y duración mínima de 15 minutos
+ *  - RN-04: fechaFin > fechaInicio y duración mínima de 15 minutos (IllegalArgumentException / CommitmentValidationException)
  *  - RN-05: Validación de correos de participantes bajo formato RFC 5322 (mínimo 1)
- *  - Contratos de TaskService y CommitmentService sobre SQLite
- *  - Verificación de variables CSS (:root) de la paleta vintage en public/css/vintage.css
+ *  - Contratos de TaskService y CommitmentService sobre SQLite y sobre Mocks TDD
+ *  - Verificación de variables CSS (:root) y Frontend Modular Glassmorphism
  */
 
 const assert = require('node:assert/strict');
@@ -24,9 +24,12 @@ const { CommitmentService } = require('../src/services/CommitmentService');
 const { TaskPriority, TaskStatus, CommitmentStatus } = require('../src/domain/enums');
 const {
   TaskValidationException,
+  IllegalStateException,
   ScheduleConflictException,
   CommitmentValidationException,
+  IllegalArgumentException,
 } = require('../src/domain/exceptions');
+const { executeTddSuites } = require('./tdd/run-tdd');
 
 function runVerificationSuite() {
   const db = createDatabase(':memory:');
@@ -42,7 +45,7 @@ function runVerificationSuite() {
     console.log(`  [PASS] ${name}`);
   }
 
-  console.log('=== INICIANDO FASE 4: VERIFICACIÓN DEL SISTEMA (MODELO EN CASCADA) ===\n');
+  console.log('=== INICIANDO FASE 4: VERIFICACIÓN DEL SISTEMA (SDD + TDD) ===\n');
 
   // 1. Verificación del Stack SQLite y Tablas Relacionales
   test('Stack SQLite: Esquema relacional schema.sql cargado con tablas tasks, task_tags, commitments y commitment_participants', () => {
@@ -77,7 +80,7 @@ function runVerificationSuite() {
   test('Dominio Task: Crea tarea válida en SQLite (tasks + task_tags) y respeta límites de 100 y 500 caracteres', () => {
     const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const task = taskService.createTask({
-      titulo: 'Tarea Vintage de Prueba',
+      titulo: 'Tarea de Prueba SDD',
       descripcion: 'Descripción de prueba dentro del límite de 500 caracteres.',
       fechaVencimiento: futureDate,
       prioridad: TaskPriority.ALTA,
@@ -89,13 +92,11 @@ function runVerificationSuite() {
     assert.deepEqual(task.etiquetas, ['Trabajo', 'Personal']);
     createdTaskId = task.id;
 
-    // Verificar filas en tabla relacional task_tags
     const tagCount = db
       .prepare(`SELECT COUNT(*) as total FROM task_tags WHERE task_id = ?`)
       .get(task.id).total;
     assert.equal(tagCount, 2);
 
-    // Título > 100 caracteres debe lanzar TaskValidationException
     assert.throws(
       () =>
         taskService.createTask({
@@ -105,7 +106,6 @@ function runVerificationSuite() {
       TaskValidationException
     );
 
-    // Descripción > 500 caracteres debe lanzar TaskValidationException
     assert.throws(
       () =>
         taskService.createTask({
@@ -117,8 +117,8 @@ function runVerificationSuite() {
     );
   });
 
-  // 4. Prueba RN-02
-  test('RN-02: Impide que una tarea COMPLETADA o CANCELADA vuelva a EN_PROCESO o PENDIENTE', () => {
+  // 4. Prueba RN-02 / TDD-T03
+  test('RN-02 & TDD-T03: Impide que una tarea COMPLETADA o CANCELADA vuelva a EN_PROCESO o PENDIENTE (IllegalStateException)', () => {
     const inProgress = taskService.updateTaskStatus(createdTaskId, TaskStatus.EN_PROCESO);
     assert.equal(inProgress.estado, TaskStatus.EN_PROCESO);
 
@@ -127,12 +127,15 @@ function runVerificationSuite() {
 
     assert.throws(
       () => taskService.updateTaskStatus(createdTaskId, TaskStatus.EN_PROCESO),
-      (err) => err instanceof TaskValidationException && err.ruleCode === 'RN-02'
+      (err) =>
+        err instanceof IllegalStateException &&
+        err instanceof TaskValidationException &&
+        err.ruleCode === 'RN-02'
     );
 
     assert.throws(
       () => taskService.updateTaskStatus(createdTaskId, TaskStatus.PENDIENTE),
-      (err) => err instanceof TaskValidationException && err.ruleCode === 'RN-02'
+      (err) => err instanceof IllegalStateException && err.ruleCode === 'RN-02'
     );
   });
 
@@ -155,8 +158,8 @@ function runVerificationSuite() {
     assert.ok(overdueList.some((item) => item.id === t.id));
   });
 
-  // 6. Prueba RN-04 (fechaFin > fechaInicio y duración mínima de 15 minutos)
-  test('RN-04: Exige fechaFin > fechaInicio y duración mínima de 15 minutos en compromisos', () => {
+  // 6. Prueba RN-04 / TDD-C04 (fechaFin > fechaInicio y duración mínima de 15 minutos)
+  test('RN-04 & TDD-C04: Exige fechaFin > fechaInicio y duración mínima de 15 minutos (IllegalArgumentException)', () => {
     const start = '2026-12-01T10:00:00.000Z';
     const invalidEndBefore = '2026-12-01T09:30:00.000Z';
     const invalidEndShort = '2026-12-01T10:10:00.000Z'; // 10 min (< 15 min)
@@ -180,7 +183,10 @@ function runVerificationSuite() {
           fechaFin: invalidEndShort,
           participantes: ['autor@vintage.com'],
         }),
-      (err) => err instanceof CommitmentValidationException && err.ruleCode === 'RN-04'
+      (err) =>
+        err instanceof IllegalArgumentException &&
+        err instanceof CommitmentValidationException &&
+        err.ruleCode === 'RN-04'
     );
   });
 
@@ -225,7 +231,6 @@ function runVerificationSuite() {
     assert.equal(first.minutosRecordatorio, 15);
     assert.equal(first.estado, CommitmentStatus.PROGRAMADO);
 
-    // Verificar consulta hasScheduleConflict usando el UUID userId (Contrato SDD 4.2)
     assert.equal(
       commitmentService.hasScheduleConflict(
         creatorUuid,
@@ -235,7 +240,6 @@ function runVerificationSuite() {
       true
     );
 
-    // Solapamiento parcial (09:30 a 10:30) para la misma creadora clara@vintage.es -> ScheduleConflictException
     assert.throws(
       () =>
         commitmentService.scheduleCommitment({
@@ -248,7 +252,6 @@ function runVerificationSuite() {
       ScheduleConflictException
     );
 
-    // Al cancelar el primer compromiso, el bloque horario queda libre
     commitmentService.cancelCommitment(first.id);
     assert.equal(
       commitmentService.hasScheduleConflict(
@@ -269,8 +272,8 @@ function runVerificationSuite() {
     assert.ok(rescheduled.id);
   });
 
-  // 9. Verificación de la paleta CSS obligatoria en public/css/vintage.css
-  test('Diseño Visual: Verifica variables CSS (:root) y paleta pastel exacta en vintage.css', () => {
+  // 9. Verificación de la paleta CSS en public/css/vintage.css
+  test('Diseño Visual: Verifica variables CSS (:root) en vintage.css', () => {
     const cssPath = path.join(__dirname, '..', 'public', 'css', 'vintage.css');
     const cssContent = fs.readFileSync(cssPath, 'utf8');
 
@@ -307,12 +310,23 @@ function runVerificationSuite() {
       'public/js/modules/notifications.js',
       'public/js/modules/ui-components.js',
       'src/contracts/sdd-contracts.ts',
+      'tests/tdd/run-tdd.js',
+      'tests/tdd/mocks.js',
+      'tests/tdd/sdd-tdd-suites.spec.ts',
     ];
 
     for (const relPath of requiredModules) {
       const fullPath = path.join(__dirname, '..', relPath);
       assert.ok(fs.existsSync(fullPath), `Falta el módulo requerido: ${relPath}`);
     }
+  });
+
+  // 11. Verificación Completa de las Suites Unitarias TDD (TaskServiceTest & CommitmentServiceTest)
+  test('Suites Unitarias TDD (Red-Green-Refactor): TaskServiceTest (TDD-T01..T05) y CommitmentServiceTest (TDD-C01..C05) al 100%', () => {
+    const report = executeTddSuites();
+    assert.equal(report.failed, 0, 'Ninguna prueba unitaria TDD debe fallar');
+    assert.equal(report.coveragePercent, 100, 'La cobertura lógica TDD debe ser 100%');
+    assert.equal(report.total, 10, 'Deben ejecutarse los 10 casos unitarios TDD');
   });
 
   console.log(`\n=== RESULTADO: ${passed}/${passed} PRUEBAS DE VERIFICACIÓN SUPERADAS ===`);

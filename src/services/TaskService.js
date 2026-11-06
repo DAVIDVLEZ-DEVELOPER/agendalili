@@ -5,7 +5,19 @@
 
 const { Task } = require('../domain/entities');
 const { TaskStatus, TaskPriority } = require('../domain/enums');
-const { TaskValidationException } = require('../domain/exceptions');
+const { TaskValidationException, IllegalStateException } = require('../domain/exceptions');
+
+const STATUS_ALIASES = Object.freeze({
+  IN_PROCESS: TaskStatus.EN_PROCESO,
+  PENDING: TaskStatus.PENDIENTE,
+  COMPLETED: TaskStatus.COMPLETADA,
+  CANCELLED: TaskStatus.CANCELADA,
+});
+
+function normalizeTaskStatus(status) {
+  if (!status) return status;
+  return STATUS_ALIASES[status] || status;
+}
 
 class TaskService {
   /**
@@ -51,7 +63,7 @@ class TaskService {
       descripcion: dto.descripcion || '',
       fechaVencimiento: dueDate.toISOString(),
       prioridad: dto.prioridad || TaskPriority.MEDIA,
-      estado: dto.estado || TaskStatus.PENDIENTE,
+      estado: normalizeTaskStatus(dto.estado) || TaskStatus.PENDIENTE,
       etiquetas: Array.isArray(dto.etiquetas) ? dto.etiquetas : [],
     });
 
@@ -71,27 +83,29 @@ class TaskService {
       throw new TaskValidationException(`No se encontró la tarea con id "${id}".`, 'TASK_NOT_FOUND');
     }
 
-    if (!Object.values(TaskStatus).includes(newStatus)) {
+    const normalizedStatus = normalizeTaskStatus(newStatus);
+
+    if (!Object.values(TaskStatus).includes(normalizedStatus)) {
       throw new TaskValidationException(
         `Estado "${newStatus}" inválido. Permitidos: ${Object.values(TaskStatus).join(', ')}.`,
         'DOMAIN_TASK_STATUS'
       );
     }
 
-    // RN-02: Una tarea COMPLETADA o CANCELADA no puede cambiar a EN_PROCESO o PENDIENTE
+    // RN-02 (TDD-T03): Una tarea COMPLETADA o CANCELADA no puede cambiar a EN_PROCESO o PENDIENTE
     const isTerminal =
       existing.estado === TaskStatus.COMPLETADA || existing.estado === TaskStatus.CANCELADA;
     const isReopening =
-      newStatus === TaskStatus.EN_PROCESO || newStatus === TaskStatus.PENDIENTE;
+      normalizedStatus === TaskStatus.EN_PROCESO || normalizedStatus === TaskStatus.PENDIENTE;
 
     if (isTerminal && isReopening) {
-      throw new TaskValidationException(
-        `RN-02: Una tarea en estado ${existing.estado} no puede volver a cambiar a ${newStatus}.`,
+      throw new IllegalStateException(
+        `RN-02: No se puede reabrir una tarea completada (estado actual: ${existing.estado}, estado solicitado: ${normalizedStatus}).`,
         'RN-02'
       );
     }
 
-    return this.taskRepository.updateStatus(id, newStatus);
+    return this.taskRepository.updateStatus(id, normalizedStatus);
   }
 
   /**
@@ -107,15 +121,16 @@ class TaskService {
       throw new TaskValidationException(`No se encontró la tarea con id "${id}".`, 'TASK_NOT_FOUND');
     }
 
-    const nextStatus = dto.estado !== undefined ? dto.estado : existing.estado;
+    const nextStatus =
+      dto.estado !== undefined ? normalizeTaskStatus(dto.estado) : existing.estado;
     const isTerminal =
       existing.estado === TaskStatus.COMPLETADA || existing.estado === TaskStatus.CANCELADA;
     const isReopening =
       nextStatus === TaskStatus.EN_PROCESO || nextStatus === TaskStatus.PENDIENTE;
 
     if (isTerminal && isReopening) {
-      throw new TaskValidationException(
-        `RN-02: Una tarea en estado ${existing.estado} no puede cambiar a ${nextStatus}.`,
+      throw new IllegalStateException(
+        `RN-02: No se puede reabrir una tarea completada (estado actual: ${existing.estado}, estado solicitado: ${nextStatus}).`,
         'RN-02'
       );
     }

@@ -15,6 +15,7 @@ const { CommitmentRepository } = require('./repositories/CommitmentRepository');
 const { TaskService } = require('./services/TaskService');
 const { CommitmentService } = require('./services/CommitmentService');
 const { TaskPriority, TaskStatus, CommitmentStatus } = require('./domain/enums');
+const { executeTddSuites } = require('../tests/tdd/run-tdd');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -162,7 +163,11 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
   const commitmentService = new CommitmentService(commitmentRepository);
 
   if (shouldSeed) {
-    seedInitialDataIfEmpty(taskService, commitmentService);
+    try {
+      seedInitialDataIfEmpty(taskService, commitmentService);
+    } catch {
+      // Ignorar si los datos semilla ya existen o se traslapan
+    }
   }
 
   const publicDir = path.join(__dirname, '..', 'public');
@@ -172,6 +177,12 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
       const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const pathname = parsedUrl.pathname;
       const method = req.method.toUpperCase();
+
+      // ==================== RUTA API: EJECUTOR TDD (RED-GREEN-REFACTOR) ====================
+      if (pathname === '/api/tdd/run' && method === 'GET') {
+        const report = executeTddSuites();
+        return sendJson(res, 200, { ok: true, data: report });
+      }
 
       // ==================== RUTAS API: TAREAS ====================
       if (pathname === '/api/tasks' && method === 'GET') {
@@ -223,7 +234,8 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
         const userId = parsedUrl.searchParams.get('userId') || '*';
         const start = parsedUrl.searchParams.get('start');
         const end = parsedUrl.searchParams.get('end');
-        const hasConflict = commitmentService.hasScheduleConflict(userId, start, end);
+        const excludeId = parsedUrl.searchParams.get('excludeId') || null;
+        const hasConflict = commitmentService.hasScheduleConflict(userId, start, end, excludeId);
         return sendJson(res, 200, { ok: true, hasConflict });
       }
 
