@@ -5,7 +5,11 @@
 
 const { randomUUID } = require('node:crypto');
 const { TaskPriority, TaskStatus, CommitmentStatus } = require('./enums');
-const { TaskValidationException, CommitmentValidationException } = require('./exceptions');
+const {
+  TaskValidationException,
+  CommitmentValidationException,
+  IllegalArgumentException,
+} = require('./exceptions');
 
 /**
  * Expresión regular estándar basada en RFC 5322 para validación de correos (RN-05)
@@ -162,11 +166,11 @@ class Commitment {
       );
     }
 
-    // RN-04: Duración mínima de 15 minutos
+    // RN-04 (TDD-C04): Duración mínima de 15 minutos
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
     if (durationMinutes < 15) {
-      throw new CommitmentValidationException(
-        `RN-04: La duración mínima del compromiso debe ser de al menos 15 minutos (actual: ${Math.round(durationMinutes)} min).`,
+      throw new IllegalArgumentException(
+        `RN-04: Duración mínima 15 mins requerida entre fechaInicio y fechaFin (actual: ${Math.round(durationMinutes)} min).`,
         'RN-04'
       );
     }

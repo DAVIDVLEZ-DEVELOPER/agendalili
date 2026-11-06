@@ -1,11 +1,13 @@
 {
   "name": "agenda-vintage-sdd",
   "version": "1.0.0",
-  "description": "Sistema de Agenda de Tareas y Compromisos con Estética Vintage bajo SDD y Modelo en Cascada",
+  "description": "Sistema de Agenda de Tareas y Compromisos bajo SDD, TDD (Red-Green-Refactor) y UI Glassmorphism",
   "main": "src/server.js",
   "scripts": {
     "start": "node --no-warnings src/server.js",
-    "test": "node --no-warnings tests/run-tests.js"
+    "test": "node --no-warnings tests/run-tests.js",
+    "test:tdd": "node --no-warnings tests/tdd/run-tdd.js",
+    "test:ts": "node --no-warnings tests/tdd/sdd-tdd-suites.spec.ts"
   },
   "engines": {
     "node": ">=22.5.0"

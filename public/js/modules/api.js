@@ -1,6 +1,6 @@
 /**
- * Módulo de Servicios Cliente API (Contrato SDD Sección 4)
- * Implementa las llamadas deterministas hacia TaskService y CommitmentService en el backend
+ * Módulo de Servicios Cliente API (Contrato SDD Sección 4 + Suite TDD)
+ * Implementa las llamadas deterministas hacia TaskService, CommitmentService y TddRunner en el backend
  */
 
 class SddApiException extends Error {
@@ -161,6 +161,16 @@ export class CommitmentClientService {
       method: 'DELETE',
     });
     return res.deleted;
+  }
+}
+
+/**
+ * Servicio Cliente para Ejecución de Suites TDD (TaskServiceTest & CommitmentServiceTest)
+ */
+export class TddClientService {
+  static async runSuites() {
+    const res = await requestJson('/api/tdd/run');
+    return res.data;
   }
 }
 

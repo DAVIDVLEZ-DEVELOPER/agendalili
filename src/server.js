@@ -15,6 +15,7 @@ const { CommitmentRepository } = require('./repositories/CommitmentRepository');
 const { TaskService } = require('./services/TaskService');
 const { CommitmentService } = require('./services/CommitmentService');
 const { TaskPriority, TaskStatus, CommitmentStatus } = require('./domain/enums');
+const { executeTddSuites } = require('../tests/tdd/run-tdd');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -172,6 +173,12 @@ function createApp(dbPath = DEFAULT_DB_PATH, shouldSeed = true) {
       const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const pathname = parsedUrl.pathname;
       const method = req.method.toUpperCase();
+
+      // ==================== RUTA API: EJECUTOR TDD (RED-GREEN-REFACTOR) ====================
+      if (pathname === '/api/tdd/run' && method === 'GET') {
+        const report = executeTddSuites();
+        return sendJson(res, 200, { ok: true, data: report });
+      }
 
       // ==================== RUTAS API: TAREAS ====================
       if (pathname === '/api/tasks' && method === 'GET') {

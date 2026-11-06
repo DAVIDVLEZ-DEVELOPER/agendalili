@@ -1,9 +1,9 @@
 /**
  * Orquestador Principal del Frontend Modular Glassmorphism (ES6 Modules)
- * Especificación del Sistema de Agenda de Tareas y Compromisos (SDD v1.0.0)
+ * Especificación del Sistema de Agenda de Tareas y Compromisos (SDD v1.0.0 + Plan TDD)
  */
 
-import { TaskClientService, CommitmentClientService } from './modules/api.js';
+import { TaskClientService, CommitmentClientService, TddClientService } from './modules/api.js';
 import { AppStore } from './modules/state.js';
 import { NotificationManager } from './modules/notifications.js';
 import { UIRenderer } from './modules/ui-components.js';
@@ -41,6 +41,7 @@ const els = {
   kpiOverdueTasks: document.getElementById('kpiOverdueTasks'),
   kpiActiveCommitments: document.getElementById('kpiActiveCommitments'),
   kpiConfirmedCommitments: document.getElementById('kpiConfirmedCommitments'),
+  kpiTddStatus: document.getElementById('kpiTddStatus'),
 
   // Formulario de Tareas
   taskForm: document.getElementById('taskForm'),
@@ -89,9 +90,12 @@ const els = {
   commitmentsContainer: document.getElementById('commitmentsContainer'),
   durationPresetBtns: document.querySelectorAll('[data-duration-preset]'),
 
-  // Simulador interactivo SDD
+  // Simulador interactivo SDD & Ejecutor TDD
   sddSimOutput: document.getElementById('sddSimOutput'),
   sddSimButtons: document.querySelectorAll('[data-sdd-sim]'),
+  btnRunTddSuites: document.getElementById('btnRunTddSuites'),
+  tddCoverageBadge: document.getElementById('tddCoverageBadge'),
+  tddSuitesContainer: document.getElementById('tddSuitesContainer'),
 };
 
 const notifier = new NotificationManager(els.toastStack, els.globalNotification);
@@ -159,6 +163,77 @@ async function syncAllData() {
 }
 
 /**
+ * Ejecuta y renderiza el reporte de las suites TDD (TaskServiceTest & CommitmentServiceTest)
+ */
+async function runAndRenderTddSuites(notifyUser = false) {
+  if (!els.tddSuitesContainer) return;
+  try {
+    const report = await TddClientService.runSuites();
+    if (els.kpiTddStatus) {
+      els.kpiTddStatus.textContent = `${report.passed} / ${report.total} PASS`;
+    }
+    if (els.tddCoverageBadge) {
+      els.tddCoverageBadge.textContent = `Cobertura: ${report.coveragePercent}%`;
+    }
+
+    els.tddSuitesContainer.innerHTML = (report.suites || [])
+      .map(
+        (suite) => `
+        <div class="col-md-6">
+          <div class="sdd-rule-card">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--glass-border-subtle);">
+              <strong class="small">${escapeHtml(suite.suiteName)}</strong>
+              <span class="badge-rule">${suite.tests.length} Tests Unitarios</span>
+            </div>
+            <div class="d-flex flex-column gap-2">
+              ${suite.tests
+                .map(
+                  (t) => `
+                  <div class="d-flex justify-content-between align-items-center gap-2 p-2 rounded" style="background: var(--glass-surface-elevated); border: 1px solid var(--glass-border-subtle);">
+                    <div>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="glass-badge ${
+                          t.status === 'PASS' ? 'badge-status-COMPLETADA' : 'badge-prio-CRITICA'
+                        }">${t.status === 'PASS' ? '✓ GREEN' : '✗ RED'}</span>
+                        <code class="small fw-bold">${escapeHtml(t.id)}</code>
+                        <span class="mono-uuid">${escapeHtml(t.cycle)}</span>
+                      </div>
+                      <div class="small mt-1" style="color: var(--text-secondary); font-size: 0.75rem;">
+                        ${escapeHtml(t.name)}
+                      </div>
+                    </div>
+                    <span class="mono-uuid">${t.durationMs}ms</span>
+                  </div>
+                `
+                )
+                .join('')}
+            </div>
+          </div>
+        </div>
+      `
+      )
+      .join('');
+
+    if (notifyUser) {
+      notifier.pushToast({
+        title: 'Suites TDD Ejecutadas',
+        message: `${report.passed}/${report.total} pruebas unitarias en verde (Cobertura: ${report.coveragePercent}%).`,
+        type: report.failed === 0 ? 'success' : 'error',
+        ruleCode: 'Red → Green → Refactor',
+      });
+    }
+  } catch (err) {
+    if (notifyUser) {
+      notifier.pushToast({
+        title: 'Error en Runner TDD',
+        message: err.message,
+        type: 'error',
+      });
+    }
+  }
+}
+
+/**
  * Renderiza toda la interfaz cuando cambia el estado
  */
 function renderApp(state) {
@@ -216,15 +291,12 @@ function renderApp(state) {
   );
 }
 
-let liveValidationSeq = 0;
-
 /**
  * Validación en vivo de rango de fechas, duración RN-04 y conflicto RN-03 en Compromisos
  */
 async function validateCommitmentLive() {
   if (!els.commFechaInicio || !els.commFechaFin || !els.commDateRangeAlert) return false;
 
-  const currentSeq = ++liveValidationSeq;
   const startVal = els.commFechaInicio.value;
   const endVal = els.commFechaFin.value;
 
@@ -241,7 +313,7 @@ async function validateCommitmentLive() {
     els.commDateRangeAlert.className = 'glass-alert glass-alert--error mb-3';
     els.commDateRangeAlert.innerHTML = `
       <div>
-        <strong>✗ ${escapeHtml(durationCheck.ruleCode)}:</strong> ${escapeHtml(durationCheck.message)}
+        <strong>✗ ${escapeHtml(durationCheck.ruleCode)} (IllegalArgumentException):</strong> ${escapeHtml(durationCheck.message)}
       </div>
     `;
     return false;
@@ -255,17 +327,14 @@ async function validateCommitmentLive() {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   const creatorEmail = rawParticipants[0] || '*';
-  const participantsQuery = rawParticipants.length > 0 ? rawParticipants.join(',') : '*';
 
   if (currentStatus !== 'CANCELADO') {
     try {
       const hasServerConflict = await CommitmentClientService.hasScheduleConflict(
-        participantsQuery,
+        creatorEmail,
         start.toISOString(),
         end.toISOString()
       );
-      if (currentSeq !== liveValidationSeq) return false;
-
       const localCheck = evaluateLocalScheduleConflict(
         start,
         end,
@@ -289,7 +358,7 @@ async function validateCommitmentLive() {
         return false;
       }
     } catch {
-      if (currentSeq !== liveValidationSeq) return false;
+      // Se verificará nuevamente al enviar
     }
   }
 
@@ -376,7 +445,7 @@ async function handleTaskSubmit(event) {
       title: 'Tarea Registrada',
       message: `"${created.titulo}" creada exitosamente con prioridad ${created.prioridad}.`,
       type: 'success',
-      ruleCode: 'RN-01 OK',
+      ruleCode: 'TDD-T01 OK',
     });
     await syncAllData();
   } catch (err) {
@@ -422,7 +491,7 @@ async function handleCommitmentSubmit(event) {
   if (!durationCheck.valid) {
     showInlineError(els.commFormFeedback, durationCheck.message, durationCheck.ruleCode);
     notifier.pushToast({
-      title: 'CommitmentValidationException',
+      title: 'IllegalArgumentException',
       message: durationCheck.message,
       type: 'error',
       ruleCode: durationCheck.ruleCode,
@@ -466,7 +535,7 @@ async function handleCommitmentSubmit(event) {
       title: 'Compromiso Agendado',
       message: `"${scheduled.titulo}" agendado sin conflictos de horario.`,
       type: 'success',
-      ruleCode: 'RN-03..05 OK',
+      ruleCode: 'TDD-C01 OK',
     });
   } catch (err) {
     showInlineError(els.commFormFeedback, err.message, err.ruleCode);
@@ -506,27 +575,9 @@ function closeEditTaskModal() {
 
 async function handleEditTaskSubmit(event) {
   event.preventDefault();
-  els.editTaskFeedback?.classList.add('d-none');
-
   const id = els.editTaskId.value;
   const existing = store.getState().tasks.find((t) => t.id === id);
   if (!existing) return;
-
-  const titulo = els.editTaskTitulo.value.trim();
-  const descripcion = els.editTaskDescripcion.value.trim();
-
-  if (!titulo) {
-    showInlineError(els.editTaskFeedback, 'El título de la tarea es obligatorio.', 'DOMAIN_TASK_TITLE');
-    return;
-  }
-  if (titulo.length > 100) {
-    showInlineError(els.editTaskFeedback, 'El título no puede exceder 100 caracteres.', 'DOMAIN_TASK_TITLE_MAX');
-    return;
-  }
-  if (descripcion.length > 500) {
-    showInlineError(els.editTaskFeedback, 'La descripción no puede exceder 500 caracteres.', 'DOMAIN_TASK_DESC_MAX');
-    return;
-  }
 
   const nextStatus = els.editTaskEstado.value;
   const transitionCheck = validateTaskStatusTransition(existing.estado, nextStatus);
@@ -544,8 +595,8 @@ async function handleEditTaskSubmit(event) {
 
   try {
     const updated = await TaskClientService.updateTask(id, {
-      titulo,
-      descripcion,
+      titulo: els.editTaskTitulo.value.trim(),
+      descripcion: els.editTaskDescripcion.value.trim(),
       fechaVencimiento: new Date(dueVal).toISOString(),
       prioridad: els.editTaskPrioridad.value,
       estado: nextStatus,
@@ -569,7 +620,7 @@ async function handleEditTaskSubmit(event) {
 }
 
 /**
- * Simulador interactivo de Reglas de Negocio SDD (Sección 3 y 4)
+ * Simulador interactivo de Reglas de Negocio SDD / TDD (Sección 3 y 4)
  */
 async function runSddRuleSimulation(ruleKey) {
   if (!els.sddSimOutput) return;
@@ -586,10 +637,13 @@ async function runSddRuleSimulation(ruleKey) {
         (t) => t.estado === 'COMPLETADA' || t.estado === 'CANCELADA'
       );
       if (completedTask) {
-        await TaskClientService.updateTaskStatus(completedTask.id, 'EN_PROCESO');
+        await TaskClientService.updateTaskStatus(completedTask.id, 'IN_PROCESS');
       } else {
-        const res = validateTaskStatusTransition('COMPLETADA', 'PENDIENTE');
-        throw { name: 'TaskValidationException', ruleCode: 'RN-02', message: res.message };
+        throw {
+          name: 'IllegalStateException',
+          ruleCode: 'RN-02',
+          message: 'RN-02: No se puede reabrir una tarea completada (estado solicitado: EN_PROCESO).',
+        };
       }
     } else if (ruleKey === 'RN-03') {
       const activeComm = store.getState().commitments.find(
@@ -611,9 +665,9 @@ async function runSddRuleSimulation(ruleKey) {
       }
     } else if (ruleKey === 'RN-04') {
       const start = new Date(Date.now() + 7200 * 1000);
-      const endShort = new Date(start.getTime() + 5 * 60 * 1000); // 5 minutos (< 15m)
+      const endShort = new Date(start.getTime() + 10 * 60 * 1000); // 10 minutos (< 15m)
       await CommitmentClientService.scheduleCommitment({
-        titulo: 'Prueba Duración 5 min RN-04',
+        titulo: 'Prueba Duración 10 min RN-04',
         fechaInicio: start.toISOString(),
         fechaFin: endShort.toISOString(),
         participantes: ['clara.valle@editorialvintage.es'],
@@ -690,12 +744,19 @@ function setupEventListeners() {
         title: 'getPendingTasksOverdue(now)',
         message: `Se detectaron ${count} tarea(s) pendiente(s) o en proceso vencida(s) respecto a la fecha seleccionada.`,
         type: count > 0 ? 'warning' : 'success',
-        ruleCode: 'SDD 4.1',
+        ruleCode: 'TDD-T04',
       });
     });
   }
 
-  // Botones de duración rápida en compromisos (+15m, +30m, +45m, +60m)
+  // Botón de ejecución en vivo de la suite TDD
+  if (els.btnRunTddSuites) {
+    els.btnRunTddSuites.addEventListener('click', () => {
+      runAndRenderTddSuites(true);
+    });
+  }
+
+  // Botones de duración rápida en compromisos (+15m, +30m, +60m)
   els.durationPresetBtns.forEach((btn) => {
     btn.addEventListener('click', async () => {
       const mins = parseInt(btn.getAttribute('data-duration-preset'), 10);
@@ -711,33 +772,7 @@ function setupEventListeners() {
   });
 
   els.taskForm?.addEventListener('submit', handleTaskSubmit);
-  els.taskForm?.addEventListener('reset', () => {
-    setTimeout(() => {
-      initDefaultDates();
-      els.taskFormFeedback?.classList.add('d-none');
-      if (els.taskTituloCounter) {
-        els.taskTituloCounter.textContent = '0 / 100';
-        els.taskTituloCounter.classList.remove('near-limit', 'at-limit');
-      }
-      if (els.taskDescripcionCounter) {
-        els.taskDescripcionCounter.textContent = '0 / 500';
-        els.taskDescripcionCounter.classList.remove('near-limit', 'at-limit');
-      }
-    }, 0);
-  });
-
   els.commitmentForm?.addEventListener('submit', handleCommitmentSubmit);
-  els.commitmentForm?.addEventListener('reset', () => {
-    setTimeout(() => {
-      initDefaultDates();
-      els.commFormFeedback?.classList.add('d-none');
-      if (els.commTituloCounter) {
-        els.commTituloCounter.textContent = '0 / 100';
-        els.commTituloCounter.classList.remove('near-limit', 'at-limit');
-      }
-      validateCommitmentLive();
-    }, 0);
-  });
 
   ['change', 'input'].forEach((evt) => {
     els.commFechaInicio?.addEventListener(evt, validateCommitmentLive);
@@ -777,7 +812,7 @@ function setupEventListeners() {
       await syncAllData();
     } catch (err) {
       notifier.pushToast({
-        title: err.name || 'TaskValidationException',
+        title: err.name || 'IllegalStateException',
         message: err.message,
         type: 'error',
         ruleCode: err.ruleCode || 'RN-02',
@@ -796,37 +831,19 @@ function setupEventListeners() {
     const deleteBtn = e.target.closest('.js-delete-task');
     if (deleteBtn) {
       const taskId = deleteBtn.getAttribute('data-task-id');
-      try {
-        await TaskClientService.deleteTask(taskId);
-        notifier.pushToast({
-          title: 'Tarea Eliminada',
-          message: 'La tarea fue eliminada del repositorio.',
-          type: 'success',
-        });
-        await syncAllData();
-      } catch (err) {
-        notifier.pushToast({
-          title: err.name || 'Error',
-          message: err.message,
-          type: 'error',
-        });
-      }
+      await TaskClientService.deleteTask(taskId);
+      notifier.pushToast({
+        title: 'Tarea Eliminada',
+        message: 'La tarea fue eliminada del repositorio.',
+        type: 'success',
+      });
+      await syncAllData();
     }
   });
 
   // Modal de edición de tarea
   els.btnCloseEditModal?.addEventListener('click', closeEditTaskModal);
   els.btnCancelEditModal?.addEventListener('click', closeEditTaskModal);
-  els.editTaskModal?.addEventListener('click', (e) => {
-    if (e.target === els.editTaskModal) {
-      closeEditTaskModal();
-    }
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && els.editTaskModal && !els.editTaskModal.classList.contains('d-none')) {
-      closeEditTaskModal();
-    }
-  });
   els.editTaskForm?.addEventListener('submit', handleEditTaskSubmit);
 
   // Eventos delegados de Compromisos (Confirmar, Cancelar RN-03, Eliminar)
@@ -881,22 +898,14 @@ function setupEventListeners() {
     const deleteBtn = e.target.closest('.js-delete-comm');
     if (deleteBtn) {
       const commId = deleteBtn.getAttribute('data-comm-id');
-      try {
-        await CommitmentClientService.deleteCommitment(commId);
-        notifier.pushToast({
-          title: 'Compromiso Eliminado',
-          message: 'El compromiso fue eliminado del repositorio.',
-          type: 'success',
-        });
-        await syncAllData();
-        await validateCommitmentLive();
-      } catch (err) {
-        notifier.pushToast({
-          title: err.name || 'Error',
-          message: err.message,
-          type: 'error',
-        });
-      }
+      await CommitmentClientService.deleteCommitment(commId);
+      notifier.pushToast({
+        title: 'Compromiso Eliminado',
+        message: 'El compromiso fue eliminado del repositorio.',
+        type: 'success',
+      });
+      await syncAllData();
+      await validateCommitmentLive();
     }
   });
 
@@ -913,6 +922,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   store.subscribe(renderApp);
   initDefaultDates();
   setupEventListeners();
-  await syncAllData();
+  await Promise.all([syncAllData(), runAndRenderTddSuites(false)]);
   await validateCommitmentLive();
 });

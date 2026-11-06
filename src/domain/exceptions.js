@@ -1,6 +1,6 @@
 /**
- * Excepciones deterministas del Dominio
- * Fuente: sdd-agenda-tareas.md (Sección 5.3)
+ * Excepciones deterministas del Dominio (SDD v1.0.0 + TDD Suite)
+ * Fuente: sdd-agenda-tareas.md (Sección 5.3) y Plan de Pruebas TDD
  */
 
 class TaskValidationException extends Error {
@@ -13,6 +13,21 @@ class TaskValidationException extends Error {
     this.name = 'TaskValidationException';
     this.ruleCode = ruleCode;
     this.statusCode = 400;
+  }
+}
+
+/**
+ * TDD-T03: Excepción lanzada al intentar una transición de estado ilegal en una tarea
+ * Hereda de TaskValidationException para mantener compatibilidad total con el contrato SDD.
+ */
+class IllegalStateException extends TaskValidationException {
+  /**
+   * @param {string} message Mensaje descriptivo ("No se puede reabrir una tarea completada")
+   * @param {string} [ruleCode] Código de regla (por defecto RN-02)
+   */
+  constructor(message = 'No se puede reabrir una tarea completada', ruleCode = 'RN-02') {
+    super(message, ruleCode);
+    this.name = 'IllegalStateException';
   }
 }
 
@@ -42,9 +57,25 @@ class CommitmentValidationException extends Error {
   }
 }
 
+/**
+ * TDD-C04: Excepción lanzada ante argumentos inválidos como duración menor a 15 minutos
+ * Hereda de CommitmentValidationException para mantener compatibilidad total con el contrato SDD.
+ */
+class IllegalArgumentException extends CommitmentValidationException {
+  /**
+   * @param {string} message Mensaje descriptivo ("Duración mínima 15 mins")
+   * @param {string} [ruleCode] Código de regla (por defecto RN-04)
+   */
+  constructor(message = 'Duración mínima 15 mins', ruleCode = 'RN-04') {
+    super(message, ruleCode);
+    this.name = 'IllegalArgumentException';
+  }
+}
+
 module.exports = {
   TaskValidationException,
+  IllegalStateException,
   ScheduleConflictException,
   CommitmentValidationException,
+  IllegalArgumentException,
 };
-
